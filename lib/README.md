@@ -27,7 +27,10 @@ the possible cases. Generally here, we can use the default extension mecanism of
 Java, by extending types, instead of increasing case braces. These are 
 two facets of the problem of expression (any of the existent languages solves this 
 well yet). But we can impose a runtime requirement of declaring the default case brace,
-which can approximate the functionality present in Rust and Scala as well. 
+which can approximate the functionality present in Rust and Scala as well.
+
+Other thing that we gonna make is build the types gradually, to make the Java Compiler 
+infer the return types correctly, making the user experience go smoothly.
 
 ## Implementatioon 
 
@@ -52,9 +55,9 @@ public class Match<T> {
 ```
 That way, any reference type can be matched, which includes the boxed primitive types.
 Now, how do we take the value and match against cases?
-We use `Pattern` class. The basic case class should have a type to match against and a 
-function to transform the value. We gonna leverage the `Builder` pattern to provide 
-a fluent interface to help in the construction of the pattern:
+We use `Pattern` class. The basic class should have a type to match against and a 
+function to transform the value. We gonna leverage a functional interface and build 
+gradually the final type, to make the Java compiler infer the types correctly:
 
 ```java 
 public class Pattern<T, R> {
@@ -62,28 +65,27 @@ public class Pattern<T, R> {
   private Class<T> typeClass;
   private Function<T, R> transformer;
 
-  private static class PatternBuilder<T, R> {
+  public static class PatternReturnDefiner<T> {
 
-    Pattern<T, R> pattern;
+    Class<T> typeClass;
 
-    private PatternBuilder(){
-      this.pattern = new Pattern<>();
+    private PatternReturnDefiner(Class<T> typeClass) {
+      this.typeClass = typeClass;
     }
 
-    public PatternBuilder<T, R> type(Class<T> typeClass) {
-      this.pattern.typeClass = type;
-      return this;
+    public <R> Pattern<T, R> transformer(Function<T, R> transformer) {
+      return new Pattern<T, R>(this.typeClass, transformer);
+    }
+  }
+
+  public static class PatternBuilder<T> {
+
+    private PatternBuilder() {
     }
 
-    public PatternBuilder<T, R> transformer(Function<T, R> tranformer) {
-      this.pattern.transformer = transformer;
-      return this;
+    public PatternReturnDefiner<T> type(Class<T> typeClass) {
+      return new PatternReturnDefiner<>(typeClass);
     }
-
-    public Pattern<T, R> build() {
-      return this.pattern;
-    }
-
   }
 
 }
@@ -95,8 +97,8 @@ Starting the process to get the builder, we need a public method. Let's leverage
 a `PatternBuilder`, and build upon it:
 
 ```java 
-public static <T, R> PatternBuilder<T, R> brace(Class<T> typeClass) {
-    return new PatternBuilder<T, R>()
+public static <T> PatternBuilder<T> brace(Class<T> typeClass) {
+    return new PatternBuilder<T>()
         .type(typeClass);
 }
 ```
@@ -139,6 +141,38 @@ public R run() {
 Let's build a test to validate the basic assumptions:
 
 * Match succesfully against a type and return a value:
+
+
 ```java
 
+  @Test
+  public void testMatchSuccesfullyAnInteger() {
+    assertEquals("Is Integer",
+        Match.a(2)
+            .addCase(Pattern.brace(String.class)
+                .transformer(value -> "Is String"))
+            .addCase(
+                Pattern.brace(Integer.class)
+                    .transformer(value -> "Is Integer"))
+            .run());
+  }
+
 ```
+
+* Throw an error if the `Match` failed to match: 
+
+```java 
+  @Test
+  public void testFailingMatchOnNoMatcher() {
+    assertThrows(IllegalStateException.class, () -> {
+      Match.a(2)
+          .addCase(Pattern.brace(String.class)
+              .transformer(value -> "Is String"))
+          .addCase(Pattern.brace(Integer.class)
+              .transformer(value -> "Is Integer"))
+          .run();
+    });
+  }
+```
+
+These two tests actually works, but wait!

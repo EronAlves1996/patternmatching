@@ -10,33 +10,38 @@ public class Pattern<T, R> {
   private Class<T> typeClass;
   private Function<T, R> transformer;
 
-  private static class PatternBuilder<T, R> {
+  public static class PatternReturnDefiner<T> {
 
-    Pattern<T, R> pattern;
+    Class<T> typeClass;
+
+    private PatternReturnDefiner(Class<T> typeClass) {
+      this.typeClass = typeClass;
+    }
+
+    public <R> Pattern<T, R> transformer(Function<T, R> transformer) {
+      return new Pattern<T, R>(this.typeClass, transformer);
+    }
+  }
+
+  public static class PatternBuilder<T> {
 
     private PatternBuilder() {
-      this.pattern = new Pattern<>();
     }
 
-    public PatternBuilder<T, R> type(Class<T> typeClass) {
-      this.pattern.typeClass = typeClass;
-      return this;
-    }
-
-    public PatternBuilder<T, R> transformer(Function<T, R> transformer) {
-      this.pattern.transformer = transformer;
-      return this;
-    }
-
-    public Pattern<T, R> build() {
-      return this.pattern;
+    public PatternReturnDefiner<T> type(Class<T> typeClass) {
+      return new PatternReturnDefiner<>(typeClass);
     }
 
   }
 
-  public static <T, R> PatternBuilder<T, R> brace(Class<T> typeClass) {
-    return new PatternBuilder<T, R>()
+  public static <T> PatternReturnDefiner<T> brace(Class<T> typeClass) {
+    return new PatternBuilder<T>()
         .type(typeClass);
+  }
+
+  private Pattern(Class<T> typeClass, Function<T, R> transformer) {
+    this.typeClass = typeClass;
+    this.transformer = transformer;
   }
 
   public boolean test(Object other) {

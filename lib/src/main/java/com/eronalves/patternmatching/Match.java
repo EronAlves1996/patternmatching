@@ -1,5 +1,6 @@
 package com.eronalves.patternmatching;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -12,18 +13,20 @@ public class Match<T, R> {
   }
 
   private T value;
-  private List<Pattern<T, R>> cases;
+  private List<Pattern<?, R>> cases;
 
   private Match(T value) {
     this.value = value;
+    this.cases = new ArrayList<>();
   }
 
-  public void addCase(Pattern<T, R> aCase) {
+  public Match<T, R> addCase(Pattern<?, R> aCase) {
     this.cases.add(aCase);
+    return this;
   }
 
   public R run() {
-    for (Pattern<T, R> aCase : cases) {
+    for (Pattern<?, R> aCase : cases) {
       if (aCase.test(this.value)) {
         return aCase.apply(this.value);
       }
