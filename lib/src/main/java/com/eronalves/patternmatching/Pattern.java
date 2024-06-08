@@ -39,4 +39,12 @@ public class Pattern<T, R> {
         .type(typeClass);
   }
 
+  public boolean test(Object other) {
+    return typeClass.isInstance(other);
+  }
+
+  public R apply(Object other) {
+    return this.transformer.apply(typeClass.cast(other));
+  }
+
 }

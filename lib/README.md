@@ -95,11 +95,50 @@ Starting the process to get the builder, we need a public method. Let's leverage
 a `PatternBuilder`, and build upon it:
 
 ```java 
-
 public static <T, R> PatternBuilder<T, R> brace(Class<T> typeClass) {
     return new PatternBuilder<T, R>()
         .type(typeClass);
 }
 ```
 
+We have a basic implementation here!! 
+Now, we gonna make our `Match` class run each cases and provide a basic throws 
+if any of the cases match. Let's update too the type parameters of `Match`, to 
+include a generic return value. Let's add a method `test` to `Pattern` class 
+to make this class test a generic `Object` against it's specification and a method 
+`apply` to make to transform the object:
 
+```java
+// Pattern.java 
+
+
+public boolean test(Object other) {
+  return typeClass.isInstance(other);
+}
+
+public R apply(Object other) {
+  return this.transformer.apply(typeClass.cast(other));
+}
+
+// Match.java 
+public void addCase(Pattern<T, R> aCase) {
+  this.cases.add(aCase);
+}
+
+public R run() {
+  for (Pattern<T, R> aCase : cases) {
+    if (aCase.test(this.value)) {
+      return aCase.apply(this.value);
+    }
+  }
+  throw new IllegalStateException("Unsuccesfull match");
+}
+
+```
+
+Let's build a test to validate the basic assumptions:
+
+* Match succesfully against a type and return a value:
+```java
+
+```
