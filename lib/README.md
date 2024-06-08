@@ -50,3 +50,43 @@ public class Match<T> {
 
 }
 ```
+That way, any reference type can be matched, which includes the boxed primitive types.
+Now, how do we take the value and match against cases?
+We use `Pattern` class. The basic case class should have a type to match against and a 
+function to transform the value. We gonna leverage the `Builder` pattern to provide 
+a fluent interface to help in the construction of the pattern:
+
+```java 
+public class Pattern<T, R> {
+
+  private Class<T> typeClass;
+  private Function<T, R> transformer;
+
+  private class PatternBuilder {
+
+    Pattern<T, R> pattern;
+
+    private PatternBuilder(){
+      this.pattern = new Pattern<>();
+    }
+
+    public PatternBuilder type(Class<T> typeClass) {
+      this.pattern.typeClass = type;
+      return this;
+    }
+
+    public PatternBuilder transformer(Function<T, R> tranformer) {
+      this.pattern.transformer = transformer;
+      return this;
+    }
+
+    public Pattern<T, R> build() {
+      return this.pattern;
+    }
+
+  }
+
+
+}
+
+```
