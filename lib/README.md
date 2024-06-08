@@ -62,7 +62,7 @@ public class Pattern<T, R> {
   private Class<T> typeClass;
   private Function<T, R> transformer;
 
-  private class PatternBuilder {
+  private static class PatternBuilder<T, R> {
 
     Pattern<T, R> pattern;
 
@@ -70,12 +70,12 @@ public class Pattern<T, R> {
       this.pattern = new Pattern<>();
     }
 
-    public PatternBuilder type(Class<T> typeClass) {
+    public PatternBuilder<T, R> type(Class<T> typeClass) {
       this.pattern.typeClass = type;
       return this;
     }
 
-    public PatternBuilder transformer(Function<T, R> tranformer) {
+    public PatternBuilder<T, R> transformer(Function<T, R> tranformer) {
       this.pattern.transformer = transformer;
       return this;
     }
@@ -86,7 +86,20 @@ public class Pattern<T, R> {
 
   }
 
-
 }
 
 ```
+
+Starting the process to get the builder, we need a public method. Let's leverage the 
+`brace` (`for` and `case` are reserved words :/) method for that, which returns 
+a `PatternBuilder`, and build upon it:
+
+```java 
+
+public static <T, R> PatternBuilder<T, R> brace(Class<T> typeClass) {
+    return new PatternBuilder<T, R>()
+        .type(typeClass);
+}
+```
+
+

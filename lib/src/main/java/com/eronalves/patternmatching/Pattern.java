@@ -10,20 +10,20 @@ public class Pattern<T, R> {
   private Class<T> typeClass;
   private Function<T, R> transformer;
 
-  private class PatternBuilder {
+  private static class PatternBuilder<T, R> {
 
     Pattern<T, R> pattern;
 
-    private PatternBuilder(){
+    private PatternBuilder() {
       this.pattern = new Pattern<>();
     }
 
-    public PatternBuilder type(Class<T> typeClass) {
-      this.pattern.typeClass = type;
+    public PatternBuilder<T, R> type(Class<T> typeClass) {
+      this.pattern.typeClass = typeClass;
       return this;
     }
 
-    public PatternBuilder transformer(Function<T, R> tranformer) {
+    public PatternBuilder<T, R> transformer(Function<T, R> transformer) {
       this.pattern.transformer = transformer;
       return this;
     }
@@ -34,12 +34,9 @@ public class Pattern<T, R> {
 
   }
 
-  static<T>PatternBuilder<T>case(
-
-  Class<T> type)
-  {
-    return new PatternBuilder<>()
-        .type(type);
+  public static <T, R> PatternBuilder<T, R> brace(Class<T> typeClass) {
+    return new PatternBuilder<T, R>()
+        .type(typeClass);
   }
 
 }
