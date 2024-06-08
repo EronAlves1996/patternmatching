@@ -176,3 +176,86 @@ Let's build a test to validate the basic assumptions:
 ```
 
 These two tests actually works, but wait!
+If we try to see how the compiler actually infers the return value from this 
+match object, we gonna se that the type inference don't works correctly:
+
+```java 
+      Object run = Match.a(2)
+          .addCase(Pattern.brace(String.class)
+              .transformer(value -> "Is String"))
+          .addCase(Pattern.brace(Integer.class)
+              .transformer(value -> "Is Integer"))
+          .run();
+```
+
+Let's correctly this on `Match` using gradual type composition! Let correctly another 
+assumption about the types of `Match`:
+
+* The actual value that enters the `Match` object don't need to be known. Gonna 
+define it as generic `Object` type!
+* The only type that needs to be known is the return type. The return gonna will be 
+inferred by the compiler. 
+
+The full class definition turns as this:
+
+```java 
+
+public class Match<R> {
+
+  public static MatchTypeDefinition a(Object value) {
+    return new MatchTypeDefinition(value);
+  }
+
+  public static class MatchTypeDefinition {
+    private Object value;
+
+    private MatchTypeDefinition(Object value) {
+      this.value = value;
+    }
+
+    public <T, R> Match<R> addCase(Pattern<T, R> aCase) {
+      Match<R> matchable = new Match<R>(this.value);
+      matchable.addCase(aCase);
+      return matchable;
+    }
+
+  }
+
+  private Object value;
+  private List<Pattern<?, R>> cases;
+
+  private Match(Object value) {
+    this.value = value;
+    this.cases = new ArrayList<>();
+  }
+
+  public Match<R> addCase(Pattern<?, R> aCase) {
+    this.cases.add(aCase);
+    return this;
+  }
+
+  public R run() {
+    for (Pattern<?, R> aCase : cases) {
+      if (aCase.test(this.value)) {
+        return aCase.apply(this.value);
+      }
+    }
+    throw new IllegalStateException("Unsuccesfull match");
+  }
+
+}
+
+```
+
+If we try to infer the type now from the `Match.run` method, now it return the correct 
+type:
+
+```java
+      String run = Match.a(2)
+          .addCase(Pattern.brace(String.class)
+              .transformer(value -> "Is String"))
+          .addCase(Pattern.brace(Integer.class)
+              .transformer(value -> "Is Integer"))
+          .run();
+```
+

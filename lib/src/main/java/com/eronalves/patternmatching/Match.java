@@ -6,21 +6,36 @@ import java.util.List;
 /**
  * Match
  */
-public class Match<T, R> {
+public class Match<R> {
 
-  static public <T, R> Match<T, R> a(T value) {
-    return new Match<>(value);
+  public static MatchTypeDefinition a(Object value) {
+    return new MatchTypeDefinition(value);
   }
 
-  private T value;
+  public static class MatchTypeDefinition {
+    private Object value;
+
+    private MatchTypeDefinition(Object value) {
+      this.value = value;
+    }
+
+    public <T, R> Match<R> addCase(Pattern<T, R> aCase) {
+      Match<R> matchable = new Match<R>(this.value);
+      matchable.addCase(aCase);
+      return matchable;
+    }
+
+  }
+
+  private Object value;
   private List<Pattern<?, R>> cases;
 
-  private Match(T value) {
+  private Match(Object value) {
     this.value = value;
     this.cases = new ArrayList<>();
   }
 
-  public Match<T, R> addCase(Pattern<?, R> aCase) {
+  public Match<R> addCase(Pattern<?, R> aCase) {
     this.cases.add(aCase);
     return this;
   }
