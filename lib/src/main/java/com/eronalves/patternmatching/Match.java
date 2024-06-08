@@ -2,6 +2,7 @@ package com.eronalves.patternmatching;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Supplier;
 
 /**
  * Match
@@ -29,6 +30,7 @@ public class Match<R> {
 
   private Object value;
   private List<Pattern<?, R>> cases;
+  private Supplier<R> defaultSuppllier;
 
   private Match(Object value) {
     this.value = value;
@@ -40,13 +42,21 @@ public class Match<R> {
     return this;
   }
 
+  public Match<R> defaultValue(Supplier<R> d) {
+    this.defaultSuppllier = d;
+    return this;
+  }
+
   public R run() {
+    if (this.defaultSuppllier == null) {
+      throw new IllegalStateException("Default supplier not defined!");
+    }
     for (Pattern<?, R> aCase : cases) {
       if (aCase.test(this.value)) {
         return aCase.apply(this.value);
       }
     }
-    throw new IllegalStateException("Unsuccesfull match");
+    return defaultSuppllier.get();
   }
 
 }

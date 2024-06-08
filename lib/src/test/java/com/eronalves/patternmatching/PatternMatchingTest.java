@@ -17,18 +17,41 @@ public class PatternMatchingTest {
             .addCase(
                 Pattern.brace(Integer.class)
                     .transformer(value -> "Is Integer"))
+            .defaultValue(() -> "Default Value")
             .run());
   }
 
   @Test
   public void testFailingMatchOnNoMatcher() {
+    assertEquals("Default Value", Match.a(2)
+        .addCase(Pattern.brace(String.class)
+            .transformer(value -> "Is String"))
+        .addCase(Pattern.brace(Long.class)
+            .transformer(value -> "Is Integer"))
+        .defaultValue(() -> "Default Value")
+        .run());
+  }
+
+  @Test
+  public void testFailingToRunWithNoDefault() {
     assertThrows(IllegalStateException.class, () -> {
       Match.a(2)
-          .addCase(Pattern.brace(String.class)
-              .transformer(value -> "Is String"))
-          .addCase(Pattern.brace(Integer.class)
-              .transformer(value -> "Is Integer"))
+          .addCase(
+              Pattern.brace(Integer.class).transformer(value -> "Is String"))
           .run();
     });
+  }
+
+  @Test
+  public void testMatchWithCondition() {
+    assertEquals("Even", Match.a(2)
+        .addCase(Pattern.brace(Integer.class)
+            .condition(i -> i % 2 == 0)
+            .transformer(value -> "Even"))
+        .addCase(Pattern.brace(Integer.class)
+            .condition(i -> i % 2 == 1)
+            .transformer(value -> "Not Even"))
+        .defaultValue(() -> "No Matches")
+        .run());
   }
 }
